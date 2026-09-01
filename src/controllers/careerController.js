@@ -1,6 +1,7 @@
 import Career from '../models/Career.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { sendApplicationNotification } from '../config/mailer.js';
 
 export const getAll = asyncHandler(async (req, res) => {
   const careers = await Career.find().sort({ createdAt: -1 });
@@ -30,6 +31,12 @@ export const applyJob = asyncHandler(async (req, res) => {
 
   career.applications.unshift(application);
   await career.save();
+
+  // Send instant candidate email notification in background
+  sendApplicationNotification(application, career.title).catch(err => {
+    console.error('?? [Job App Email Notification Warning]:', err.message);
+  });
+
   return sendSuccess(res, application, 'Application submitted successfully', 201);
 });
 

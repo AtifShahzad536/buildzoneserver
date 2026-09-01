@@ -1,6 +1,7 @@
 import Lead from '../models/Lead.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { sendLeadNotification } from '../config/mailer.js';
 
 export const getAll = asyncHandler(async (req, res) => {
   const leads = await Lead.find().sort({ createdAt: -1 });
@@ -20,6 +21,12 @@ export const create = asyncHandler(async (req, res) => {
       { type: 'Lead Created', note: `Inquiry received via ${req.body.source || 'Website'}` }
     ]
   });
+
+  // Automatically dispatch instant Gmail notification in background
+  sendLeadNotification(newLead).catch(err => {
+    console.error('?? [Email Notification Non-blocking Warning]:', err.message);
+  });
+
   return sendSuccess(res, newLead, 'Your inquiry has been received. Our engineering partners will connect within 24h.', 201);
 });
 
