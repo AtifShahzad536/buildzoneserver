@@ -8,11 +8,15 @@ export const loginSchema = z.object({
 export const leadSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   email: z.string().email('Valid email is required'),
-  phone: z.string().optional(),
-  company: z.string().optional(),
-  service: z.string().optional(),
-  budget: z.string().optional(),
-  message: z.string().min(5, 'Message must be at least 5 characters'),
+  phone: z.string().optional().nullable(),
+  company: z.string().optional().nullable(),
+  country: z.string().optional().nullable(),
+  service: z.string().optional().nullable(),
+  budget: z.string().optional().nullable(),
+  timeline: z.string().optional().nullable(),
+  source: z.string().optional().nullable(),
+  message: z.string().optional().nullable(),
+  projectDetails: z.string().optional().nullable(),
 });
 
 export const serviceSchema = z.object({
