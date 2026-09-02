@@ -6,6 +6,11 @@ export const checkDBState = (req, res, next) => {
     return next();
   }
 
+  // Allow lead inquiries and candidate applications through so emails are sent even if cloud DB is pending
+  if (req.path.includes('/leads') || req.path.includes('/careers')) {
+    return next();
+  }
+
   // If database is offline (e.g. running on Vercel before MONGODB_URI is configured)
   if (req.method === 'GET') {
     return res.status(200).json({

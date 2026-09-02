@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import nodemailer from 'nodemailer';
 import { generateLeadEmailTemplate, generateApplicationEmailTemplate } from '../utils/emailTemplates.js';
 
@@ -5,16 +7,16 @@ let transporter = null;
 
 export const getTransporter = () => {
   if (!transporter) {
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_PASS;
+    const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : '';
+    const pass = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.trim().replace(/\s+/g, '') : '';
 
     if (!user || !pass) {
-      console.warn('?? [Mailer Notice]: EMAIL_USER or EMAIL_PASS is not configured in .env. Emails will be logged to console in development mode.');
+      console.warn('?? [Mailer Notice]: EMAIL_USER or EMAIL_PASS is not configured. Emails will be logged to console.');
       return null;
     }
 
     transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE || 'gmail',
+      service: 'gmail',
       auth: {
         user,
         pass,
@@ -31,8 +33,12 @@ export const sendLeadNotification = async (leadData) => {
   const recipient = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.EMAIL_USER || 'admin@buildzone.tech';
   const htmlContent = generateLeadEmailTemplate(leadData);
 
+  const senderName = process.env.EMAIL_FROM_NAME || 'BuildZone Inquiries';
+  const senderEmail = process.env.EMAIL_USER || 'noreply@buildzone.tech';
+  const fromAddress = `"${senderName}" <${senderEmail}>`;
+
   const mailOptions = {
-    from: process.env.EMAIL_FROM || `"BuildZone Inquiries" <${process.env.EMAIL_USER || 'noreply@buildzone.tech'}>`,
+    from: fromAddress,
     to: recipient,
     replyTo: leadData.email,
     subject: `?? [New Inquiry] ${leadData.name} - ${leadData.service || 'Software Development'} (${leadData.budget || 'Scope Discussion'})`,
@@ -48,7 +54,7 @@ export const sendLeadNotification = async (leadData) => {
         email: leadData.email,
         service: leadData.service,
         budget: leadData.budget,
-        message: leadData.message,
+        message: leadData.message || leadData.projectDetails,
       });
       return { success: true, mode: 'dev-log' };
     }
@@ -69,8 +75,12 @@ export const sendApplicationNotification = async (candidateData, jobTitle) => {
   const recipient = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.EMAIL_USER || 'careers@buildzone.tech';
   const htmlContent = generateApplicationEmailTemplate(candidateData, jobTitle);
 
+  const senderName = process.env.EMAIL_FROM_NAME || 'BuildZone Careers';
+  const senderEmail = process.env.EMAIL_USER || 'careers@buildzone.tech';
+  const fromAddress = `"${senderName}" <${senderEmail}>`;
+
   const mailOptions = {
-    from: process.env.EMAIL_FROM || `"BuildZone Careers" <${process.env.EMAIL_USER || 'careers@buildzone.tech'}>`,
+    from: fromAddress,
     to: recipient,
     replyTo: candidateData.applicantEmail,
     subject: `?? [New Application] ${candidateData.applicantName} for ${jobTitle}`,
