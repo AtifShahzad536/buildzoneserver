@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import apiRoutes from './routes/index.js';
 import { generalLimiter } from './middlewares/rateLimitMiddleware.js';
 import { notFound, errorHandler } from './middlewares/errorMiddleware.js';
+import { checkDBState } from './middlewares/dbMiddleware.js';
 
 dotenv.config();
 
@@ -14,16 +15,9 @@ const app = express();
 // Security HTTP Headers
 app.use(helmet());
 
-// CORS Configuration
-const allowedOrigins = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+// CORS Configuration — Allow localhost & production frontend origins
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Permissive in dev for smooth cross-testing
-    }
-  },
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -40,6 +34,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Apply Rate Limiter to API routes
 app.use('/api', generalLimiter);
+
+// Protect against uninitialized DB crashes on cloud / serverless platforms
+app.use('/api/v1', checkDBState);
 
 // Mount API Endpoints
 app.use('/api/v1', apiRoutes);
