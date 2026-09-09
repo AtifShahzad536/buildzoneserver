@@ -8,7 +8,8 @@ export default async function handler(req, res) {
       await connectDB();
     }
   } catch (e) {
-    console.warn('DB connection notice:', e ? e.message : 'Unknown');
+    console.warn('[Serverless DB connect notice]:', e ? e.message : 'Unknown');
   }
+
   return app(req, res);
 }
