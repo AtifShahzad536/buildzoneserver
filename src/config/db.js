@@ -1,25 +1,44 @@
 import mongoose from 'mongoose';
 
-// Disable buffering so queries do not hang 10 seconds if database is offline
-mongoose.set('bufferCommands', false);
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
 export const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
-    return mongoose.connection;
+  if (cached.conn && mongoose.connection.readyState === 1) {
+    return cached.conn;
   }
+
   const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
   if (!uri) {
-    console.warn('?? No MONGODB_URI or MONGO_URI specified in environment variables.');
+    console.warn('[MongoDB Notice]: No MONGODB_URI or MONGO_URI specified in environment variables.');
     return null;
   }
-  try {
-    const conn = await mongoose.connect(uri, {
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
       serverSelectionTimeoutMS: 5000,
+    };
+
+    cached.promise = mongoose.connect(uri, opts).then((mongooseInstance) => {
+      console.log([MongoDB Connected]: /);
+      return mongooseInstance;
+    }).catch((err) => {
+      cached.promise = null;
+      console.error([MongoDB Connection Error]: );
+      return null;
     });
-    console.log(`? MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
-    return conn;
-  } catch (error) {
-    console.warn(`?? MongoDB Connection Warning: ${error.message}`);
+  }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
     return null;
   }
+
+  return cached.conn;
 };
