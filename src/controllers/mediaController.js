@@ -10,10 +10,11 @@ export const uploadMedia = asyncHandler(async (req, res) => {
     const media = await Media.create({
       url: result.secure_url,
       publicId: result.public_id,
-      fileName: req.file.originalname,
-      fileType: req.file.mimetype,
+      fileName: req.file.originalname.replace(/\.[^/.]+$/, "") + ".webp",
+      fileType: 'image/webp',
       fileSize: result.bytes || req.file.size,
-      format: result.format || 'jpg',
+      size: `${((result.bytes || req.file.size) / (1024 * 1024)).toFixed(2)} MB`,
+      format: result.format || 'webp',
       category: req.body.category || 'Projects',
     });
 
