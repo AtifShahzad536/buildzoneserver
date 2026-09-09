@@ -4,32 +4,17 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'demo',
-  api_key: process.env.CLOUDINARY_API_KEY || 'demo',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'demo',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dwo0pt9cq',
+  api_key: process.env.CLOUDINARY_API_KEY || '475153828114626',
+  api_secret: process.env.CLOUDINARY_API_SECRET || '5p6fHaraUSp49hwwZ7iqfviJomk',
 });
 
 /**
- * Uploads an image or video to Cloudinary with automatic optimization
- * @param {Buffer} buffer - File buffer
- * @param {Object} options - Custom upload & transformation options
- * @returns {Promise<Object>} Cloudinary upload result
+ * Uploads an image or video to Cloudinary with automatic streaming
  */
 export const uploadToCloudinary = (buffer, options = {}) => {
   return new Promise((resolve, reject) => {
     const isVideo = options.resource_type === 'video' || (options.mimetype && options.mimetype.startsWith('video/'));
-
-    // If demo credentials, fallback gracefully with a simulated URL
-    if (process.env.CLOUDINARY_CLOUD_NAME === 'demo' || !process.env.CLOUDINARY_API_KEY) {
-      return resolve({
-        secure_url: isVideo
-          ? 'https://res.cloudinary.com/demo/video/upload/sample.mp4'
-          : 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80&fm=webp',
-        public_id: `mock_media_${Date.now()}`,
-        format: isVideo ? 'mp4' : 'webp',
-        bytes: buffer ? buffer.length : 1024,
-      });
-    }
 
     const uploadOptions = {
       folder: options.folder || 'buildzone',
@@ -49,7 +34,10 @@ export const uploadToCloudinary = (buffer, options = {}) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       uploadOptions,
       (error, result) => {
-        if (error) return reject(error);
+        if (error) {
+          console.error('[Cloudinary Upload Error]:', error);
+          return reject(error);
+        }
         resolve(result);
       }
     );
@@ -58,22 +46,7 @@ export const uploadToCloudinary = (buffer, options = {}) => {
   });
 };
 
-/**
- * Generates an on-the-fly optimized URL for an existing Cloudinary asset
- */
-export const getOptimizedImageUrl = (publicId, customOpts = {}) => {
-  return cloudinary.url(publicId, {
-    fetch_format: 'webp',
-    quality: 'auto',
-    crop: 'limit',
-    width: 1920,
-    secure: true,
-    ...customOpts,
-  });
-};
-
 export const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
-  if (process.env.CLOUDINARY_CLOUD_NAME === 'demo') return { result: 'ok' };
   return await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
 };
 
