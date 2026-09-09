@@ -1,6 +1,14 @@
 import app from '../src/app.js';
 import { connectDB } from '../src/config/db.js';
+import mongoose from 'mongoose';
 
-connectDB().catch(() => {});
-
-export default app;
+export default async function handler(req, res) {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB();
+    }
+  } catch (err) {
+    console.warn('[Vercel Serverless DB Handler Warning]:', err.message);
+  }
+  return app(req, res);
+}

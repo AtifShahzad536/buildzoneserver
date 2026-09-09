@@ -1,4 +1,12 @@
 import mongoose from 'mongoose';
+import dns from 'dns';
+
+// Fallback DNS for resolving MongoDB SRV records in restricted networks
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (e) {
+  // Ignore DNS set failures
+}
 
 let cached = global.mongoose;
 if (!cached) {
@@ -12,21 +20,28 @@ export const connectDB = async () => {
 
   const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
   if (!uri) {
+    console.warn('[MongoDB Notice]: No MONGODB_URI or MONGO_URI specified in environment variables.');
     return null;
   }
 
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(uri, {
+  if (!cached.promise || mongoose.connection.readyState === 0) {
+    const opts = {
       bufferCommands: true,
-      serverSelectionTimeoutMS: 10000,
-    }).then((instance) => {
-      console.log('[MongoDB Connected]:', instance.connection.host);
-      return instance;
-    }).catch((err) => {
-      cached.promise = null;
-      console.error('[MongoDB Connect Error]:', err.message);
-      return null;
-    });
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 10000,
+      maxPoolSize: 10,
+    };
+
+    cached.promise = mongoose.connect(uri, opts)
+      .then((instance) => {
+        console.log('[MongoDB Connected]:', instance.connection.host);
+        return instance;
+      })
+      .catch((err) => {
+        cached.promise = null;
+        console.error('[MongoDB Connect Error]:', err.message);
+        return null;
+      });
   }
 
   try {
