@@ -1,28 +1,11 @@
 import mongoose from 'mongoose';
+import { connectDB } from '../config/db.js';
 
-export const checkDBState = (req, res, next) => {
-  // If MongoDB is connected, proceed directly
-  if (mongoose.connection.readyState === 1) {
-    return next();
+export const checkDBState = async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (e) {}
   }
-
-  // Allow lead inquiries and candidate applications through so emails are sent even if cloud DB is pending
-  if (req.path.includes('/leads') || req.path.includes('/careers')) {
-    return next();
-  }
-
-  // If database is offline (e.g. running on Vercel before MONGODB_URI is configured)
-  if (req.method === 'GET') {
-    return res.status(200).json({
-      success: true,
-      message: 'Cloud database offline. Returning empty dataset.',
-      data: []
-    });
-  }
-
-  return res.status(503).json({
-    success: false,
-    message: 'Cloud Database not connected. Please add MONGODB_URI in Vercel Project Settings.',
-    error: 'DatabaseOffline'
-  });
+  next();
 };
