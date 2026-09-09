@@ -12,10 +12,13 @@ dotenv.config();
 
 const app = express();
 
+// Trust reverse proxy (Vercel / Cloudflare) for rate limiting
+app.set('trust proxy', 1);
+
 // Security HTTP Headers
 app.use(helmet());
 
-// CORS Configuration — Allow localhost & production frontend origins
+// CORS Configuration ï¿½ Allow localhost & production frontend origins
 app.use(cors({
   origin: true,
   credentials: true,
