@@ -1,8 +1,8 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Lead from '../models/Lead.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
-import { sendLeadNotification } from '../config/mailer.js';
+import { sendLeadNotification, sendClientDirectEmail } from '../config/mailer.js';
 
 export const getAll = asyncHandler(async (req, res) => {
   if (mongoose.connection.readyState === 1) {
@@ -39,7 +39,7 @@ export const create = asyncHandler(async (req, res) => {
         ]
       });
     } catch (dbErr) {
-      console.warn("?? [Lead DB Persistence Notice]:", dbErr.message);
+      console.warn("⚠️ [Lead DB Persistence Notice]:", dbErr.message);
     }
   }
 
@@ -47,10 +47,47 @@ export const create = asyncHandler(async (req, res) => {
   try {
     await sendLeadNotification(req.body);
   } catch (err) {
-    console.error('?? [Lead Email Notification Error]:', err.message);
+    console.error('❌ [Lead Email Notification Error]:', err.message);
   }
 
   return sendSuccess(res, newLead, 'Your inquiry has been received. Our engineering partners will connect within 24h.', 201);
+});
+
+/**
+ * Dispatch Custom Direct Email to Client from CRM
+ */
+export const sendClientEmail = asyncHandler(async (req, res) => {
+  const { to, subject, message, leadId } = req.body;
+
+  if (!to || !message) {
+    return sendError(res, 'Recipient email (to) and message body are required', 400);
+  }
+
+  // 1. Dispatch real email via Gmail / Nodemailer transporter
+  const mailResult = await sendClientDirectEmail({ to, subject, message });
+  if (!mailResult.success && mailResult.error) {
+    return sendError(res, `Email delivery failed: ${mailResult.error}`, 500);
+  }
+
+  // 2. Log activity to MongoDB lead record if leadId exists
+  if (leadId && mongoose.connection.readyState === 1) {
+    try {
+      const lead = await Lead.findById(leadId);
+      if (lead) {
+        if (!Array.isArray(lead.activities)) lead.activities = [];
+        lead.activities.unshift({
+          type: 'Email Sent',
+          note: `Subject: "${subject || 'Message from BuildZone'}"\n${message.length > 250 ? message.slice(0, 250) + '...' : message}`,
+          timestamp: new Date()
+        });
+        await lead.save();
+      }
+    } catch (err) {
+      console.warn("⚠️ [Lead Timeline Log Warning]:", err.message);
+    }
+  }
+
+  return sendSuccess(res, { success: true, messageId: mailResult.messageId }, `Email successfully dispatched to ${to}`);
 });
 
 export const update = asyncHandler(async (req, res) => {
