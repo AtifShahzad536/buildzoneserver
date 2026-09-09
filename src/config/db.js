@@ -23,14 +23,16 @@ export const connectDB = async () => {
       serverSelectionTimeoutMS: 5000,
     };
 
-    cached.promise = mongoose.connect(uri, opts).then((mongooseInstance) => {
-      console.log([MongoDB Connected]: /);
-      return mongooseInstance;
-    }).catch((err) => {
-      cached.promise = null;
-      console.error([MongoDB Connection Error]: );
-      return null;
-    });
+    cached.promise = mongoose.connect(uri, opts)
+      .then((mongooseInstance) => {
+        console.log('[MongoDB Connected]: ' + mongooseInstance.connection.host + '/' + mongooseInstance.connection.name);
+        return mongooseInstance;
+      })
+      .catch((err) => {
+        cached.promise = null;
+        console.error('[MongoDB Connection Error]: ' + err.message);
+        return null;
+      });
   }
 
   try {
