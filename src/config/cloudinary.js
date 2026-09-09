@@ -25,7 +25,7 @@ export const uploadToCloudinary = (buffer, options = {}) => {
         secure_url: isVideo
           ? 'https://res.cloudinary.com/demo/video/upload/sample.mp4'
           : 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80&fm=webp',
-        public_id: mock_media_,
+        public_id: `mock_media_${Date.now()}`,
         format: isVideo ? 'mp4' : 'webp',
         bytes: buffer ? buffer.length : 1024,
       });

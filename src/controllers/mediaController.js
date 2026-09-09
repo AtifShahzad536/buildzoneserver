@@ -11,13 +11,16 @@ export const uploadMedia = asyncHandler(async (req, res) => {
       mimetype: req.file.mimetype,
     });
 
+    const calculatedSize = result.bytes || req.file.size || 0;
+    const formattedSize = `${(calculatedSize / (1024 * 1024)).toFixed(2)} MB`;
+
     const media = await Media.create({
       url: result.secure_url,
       publicId: result.public_id,
-      fileName: req.file.originalname,
-      fileType: req.file.mimetype,
-      fileSize: result.bytes || req.file.size,
-      size: ${((result.bytes || req.file.size) / (1024 * 1024)).toFixed(2)} MB,
+      fileName: isVideo ? req.file.originalname : req.file.originalname.replace(/\.[^/.]+$/, '') + '.webp',
+      fileType: isVideo ? req.file.mimetype : 'image/webp',
+      fileSize: calculatedSize,
+      size: formattedSize,
       format: result.format || (isVideo ? 'mp4' : 'webp'),
       category: req.body.category || 'HeroShowcase',
     });
@@ -29,10 +32,11 @@ export const uploadMedia = asyncHandler(async (req, res) => {
     const isVideo = req.body.url.includes('.mp4') || req.body.url.includes('video') || req.body.url.includes('youtube') || req.body.url.includes('vimeo');
     const media = await Media.create({
       url: req.body.url,
-      publicId: url_,
-      fileName: req.body.name || req.body.fileName || sset_,
+      publicId: `url_${Date.now()}`,
+      fileName: req.body.name || req.body.fileName || `asset_${Date.now()}.${isVideo ? 'mp4' : 'webp'}`,
       fileType: isVideo ? 'video/mp4' : 'image/jpeg',
       fileSize: req.body.size || '1.0 MB',
+      size: req.body.size || '1.0 MB',
       format: isVideo ? 'mp4' : 'jpg',
       category: req.body.category || 'HeroShowcase',
     });
