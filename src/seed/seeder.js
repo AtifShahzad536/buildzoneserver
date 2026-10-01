@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import dns from 'dns';
 import User from '../models/User.js';
 import Service from '../models/Service.js';
 import Industry from '../models/Industry.js';
@@ -17,8 +18,17 @@ import { seedData } from './seedData.js';
 
 dotenv.config();
 
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (e) {
+  // Ignore DNS set errors
+}
+
 const connect = async () => {
-  return await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/buildzone');
+  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/buildzone';
+  return await mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 15000,
+  });
 };
 
 const importData = async () => {
