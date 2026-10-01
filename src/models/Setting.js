@@ -26,6 +26,16 @@ const settingSchema = new mongoose.Schema({
   statsExperience: { type: String, default: '5+' },
   statsSupport: { type: String, default: '24/7' },
 
+  socialVisibility: {
+    linkedin: { type: Boolean, default: true },
+    github: { type: Boolean, default: true },
+    twitter: { type: Boolean, default: true },
+    instagram: { type: Boolean, default: true },
+    facebook: { type: Boolean, default: true },
+    tiktok: { type: Boolean, default: true },
+    youtube: { type: Boolean, default: true },
+    whatsapp: { type: Boolean, default: true }
+  },
   socialLinks: {
     linkedin: { type: String, default: 'https://linkedin.com/company/buildzone-tech' },
     github: { type: String, default: 'https://github.com/buildzone-tech' },

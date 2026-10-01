@@ -25,6 +25,16 @@ const defaultSettingsData = {
   statsProjects: '250+',
   statsExperience: '5+',
   statsSupport: '24/7',
+  socialVisibility: {
+    linkedin: true,
+    github: true,
+    twitter: true,
+    instagram: true,
+    facebook: true,
+    tiktok: true,
+    youtube: true,
+    whatsapp: true
+  },
   socialLinks: {
     linkedin: 'https://linkedin.com/company/buildzone-tech',
     github: 'https://github.com/buildzone-tech',
